@@ -1,0 +1,922 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>【P】任務計畫：找出線索（辨識變量）</title>
+  <style>
+    :root {
+      --book-bg: #f5efe2;
+      --book-border: #2c3539;
+      --wood-outer: #7c4d25;
+      --wood-inner: #a06b3b;
+      --wood-dark: #5a3518;
+      --ribbon-bg: #e6dac6;
+      --paper-bg: #fbf8f1;
+      --text-dark: #1f1610;
+      --correct-green: #2e7d32;
+      --wrong-red: #c62828;
+    }
+
+    * {
+      box-sizing: border-box;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    body {
+      margin: 0;
+      padding: 20px;
+      font-family: "PingFang TC", "Microsoft JhengHei", "Noto Sans TC", sans-serif;
+      background: radial-gradient(circle, #6b4c35 0%, #3d2817 100%);
+      color: var(--text-dark);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+    }
+
+    /* 書本外框 */
+    .book-container {
+      width: 100%;
+      max-width: 1120px;
+      background: var(--book-bg);
+      border: 8px solid var(--book-border);
+      border-radius: 14px;
+      box-shadow: 0 20px 45px rgba(0,0,0,0.6), inset 0 0 40px rgba(139, 105, 67, 0.25);
+      position: relative;
+      padding: 28px 36px 28px 56px;
+      overflow: hidden;
+    }
+
+    /* 左側書頁裝訂陰影 */
+    .book-container::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 0;
+      width: 32px;
+      background: linear-gradient(to right, rgba(0,0,0,0.22), rgba(0,0,0,0.05) 60%, transparent);
+      border-right: 2px solid rgba(0,0,0,0.08);
+      pointer-events: none;
+    }
+
+    /* 頂部標題區與徽章 */
+    .header-area {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      margin-bottom: 18px;
+      min-height: 95px;
+    }
+
+    /* 左上角金色徽章 */
+    .badge {
+      position: absolute;
+      left: 0;
+      top: -10px;
+      width: 120px;
+      height: 135px;
+      background: linear-gradient(145deg, #f9d976, #b8860b);
+      clip-path: polygon(50% 0%, 95% 15%, 95% 70%, 50% 100%, 5% 70%, 5% 15%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 6px 15px rgba(0,0,0,0.35);
+      border: 3px solid #fff3c4;
+      z-index: 5;
+      padding-bottom: 10px;
+    }
+
+    .badge-inner {
+      width: 104px;
+      height: 118px;
+      background: radial-gradient(circle, #785516 0%, #4a3307 100%);
+      clip-path: polygon(50% 3%, 92% 16%, 92% 68%, 50% 96%, 8% 68%, 8% 16%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: #ffd700;
+      text-align: center;
+    }
+
+    .badge-icons {
+      font-size: 18px;
+      letter-spacing: 4px;
+      margin-bottom: -4px;
+    }
+
+    .badge-p {
+      font-size: 42px;
+      font-weight: 900;
+      line-height: 1;
+      color: #ffe066;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.6);
+    }
+
+    .badge-label {
+      margin-top: 4px;
+      background: linear-gradient(90deg, #b8860b, #f7d674, #b8860b);
+      color: #2b1d03;
+      font-size: 12px;
+      font-weight: 800;
+      padding: 2px 8px;
+      border-radius: 10px;
+    }
+
+    /* 標題橫幅 */
+    .title-banner {
+      background: linear-gradient(180deg, #fdfaf4 0%, #e4d7c3 100%);
+      border: 2px solid #8c765c;
+      border-radius: 8px;
+      padding: 12px 38px;
+      box-shadow: 0 5px 12px rgba(0,0,0,0.15);
+      text-align: center;
+      margin-left: 50px;
+      margin-right: 170px;
+    }
+
+    .title-banner h1 {
+      margin: 0;
+      font-size: 27px;
+      font-weight: 900;
+      letter-spacing: 1.5px;
+      color: #1c130c;
+    }
+
+    /* 右上角控制按鈕 */
+    .controls {
+      position: absolute;
+      right: 0;
+      top: 12px;
+      display: flex;
+      gap: 8px;
+    }
+
+    .btn {
+      background: #7c4d25;
+      color: #fff;
+      border: 2px solid #4e2f14;
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-weight: 700;
+      font-size: 14px;
+      cursor: pointer;
+      box-shadow: 0 3px 0 #4e2f14;
+      transition: all 0.15s;
+    }
+
+    .btn:hover {
+      background: #925c2e;
+      transform: translateY(-1px);
+    }
+
+    .btn:active {
+      transform: translateY(2px);
+      box-shadow: 0 1px 0 #4e2f14;
+    }
+
+    .btn.muted {
+      background: #6d655e;
+      border-color: #423d38;
+      box-shadow: 0 3px 0 #423d38;
+    }
+
+    /* 三個分類欄位區 */
+    .boxes-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 24px;
+      margin-top: 10px;
+    }
+
+    .column {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .column-title {
+      text-align: center;
+      margin-bottom: 24px;
+      line-height: 1.35;
+    }
+
+    .column-title .main {
+      font-size: 23px;
+      font-weight: 900;
+      color: #1e150f;
+    }
+
+    .column-title .sub {
+      font-size: 19px;
+      font-weight: 800;
+      color: #3b2a1e;
+    }
+
+    /* 木盒設計 */
+    .wooden-box {
+      width: 100%;
+      min-height: 270px;
+      background: linear-gradient(180deg, #683e1b 0%, #8b5629 15%, #754720 100%);
+      border: 4px solid #47280e;
+      border-radius: 10px;
+      padding: 28px 14px 16px;
+      position: relative;
+      box-shadow: 0 12px 20px rgba(0,0,0,0.35), inset 0 4px 10px rgba(255,255,255,0.15);
+      display: flex;
+      flex-direction: column;
+      transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+    }
+
+    /* 木盒內部凹槽 */
+    .box-interior {
+      flex: 1;
+      background: repeating-linear-gradient(
+        90deg,
+        #9e6838 0px,
+        #9e6838 28px,
+        #915d30 28px,
+        #915d30 30px
+      );
+      border: 3px solid #4e2d12;
+      border-radius: 6px;
+      padding: 18px 12px 12px;
+      box-shadow: inset 0 10px 18px rgba(0,0,0,0.45);
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      justify-content: flex-start;
+      align-items: center;
+      position: relative;
+    }
+
+    /* 空盒提示文字 */
+    .box-placeholder {
+      color: rgba(255, 245, 230, 0.65);
+      font-size: 15px;
+      font-weight: 700;
+      text-align: center;
+      margin: auto 0;
+      pointer-events: none;
+      border: 2px dashed rgba(255, 245, 230, 0.35);
+      padding: 14px 18px;
+      border-radius: 8px;
+    }
+
+    /* 木盒上方圖示 */
+    .box-icon {
+      position: absolute;
+      top: -26px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 58px;
+      height: 58px;
+      border-radius: 50%;
+      background: radial-gradient(circle, #fff8dc 0%, #f3d078 70%, #c89629 100%);
+      border: 3px solid #5a3518;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.35), 0 0 18px rgba(255, 215, 0, 0.55);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 30px;
+      z-index: 3;
+    }
+
+    /* 拖曳經過時的高亮效果 */
+    .wooden-box.drag-over {
+      transform: scale(1.03);
+      border-color: #ffd54f;
+      box-shadow: 0 0 22px rgba(255, 213, 79, 0.85), 0 12px 20px rgba(0,0,0,0.35);
+    }
+
+    /* 判定正確與錯誤的動畫 */
+    .wooden-box.correct-flash {
+      animation: pulseGreen 0.6s ease;
+    }
+
+    .wooden-box.wrong-shake {
+      animation: shakeRed 0.55s ease;
+    }
+
+    @keyframes pulseGreen {
+      0% { box-shadow: 0 0 0 rgba(76, 175, 80, 0); }
+      50% { box-shadow: 0 0 30px rgba(76, 175, 80, 0.95); border-color: #4caf50; }
+      100% { box-shadow: 0 12px 20px rgba(0,0,0,0.35); }
+    }
+
+    @keyframes shakeRed {
+      0%, 100% { transform: translateX(0); }
+      20% { transform: translateX(-12px); border-color: #ef5350; }
+      40% { transform: translateX(12px); border-color: #ef5350; }
+      60% { transform: translateX(-8px); border-color: #ef5350; }
+      80% { transform: translateX(8px); border-color: #ef5350; }
+    }
+
+    /* 外部待選線索區 (盒子外) */
+    .clue-pool-section {
+      margin-top: 24px;
+      background: rgba(226, 212, 188, 0.65);
+      border: 3px dashed #8c6f4e;
+      border-radius: 12px;
+      padding: 16px 20px;
+      min-height: 125px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .pool-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .pool-title {
+      font-size: 17px;
+      font-weight: 900;
+      color: #4e3219;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .status-msg {
+      font-size: 15px;
+      font-weight: 800;
+      padding: 4px 12px;
+      border-radius: 20px;
+      background: #fff9ec;
+      border: 1.5px solid #bfa582;
+      color: #5c4028;
+      transition: all 0.2s;
+    }
+
+    .status-msg.success {
+      background: #e8f5e9;
+      border-color: #4caf50;
+      color: #1b5e20;
+    }
+
+    .status-msg.error {
+      background: #ffebee;
+      border-color: #ef5350;
+      color: #b71c1c;
+    }
+
+    .clue-pool {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 14px;
+      justify-content: center;
+      width: 100%;
+    }
+
+    /* 變量紙條卡片 */
+    .clue-card {
+      background: var(--paper-bg);
+      border: 2px solid #8d775f;
+      border-bottom: 4px solid #735e47;
+      border-radius: 6px;
+      padding: 12px 16px;
+      width: 280px;
+      font-size: 16px;
+      font-weight: 800;
+      line-height: 1.4;
+      color: #231810;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+      cursor: grab;
+      position: relative;
+      transition: transform 0.18s, box-shadow 0.18s, background-color 0.2s;
+    }
+
+    .clue-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 7px 14px rgba(0,0,0,0.28);
+      background: #fffdf9;
+    }
+
+    .clue-card:active {
+      cursor: grabbing;
+    }
+
+    .clue-card.selected {
+      outline: 3px solid #ff9800;
+      transform: translateY(-4px) scale(1.02);
+    }
+
+    /* 放入木盒後的正確紙條樣式 */
+    .wooden-box .clue-card {
+      width: 100%;
+      cursor: default;
+      background: #fdfaf2;
+      border-color: #4caf50;
+      border-bottom: 4px solid #2e7d32;
+      padding-right: 34px;
+      animation: dropIn 0.3s ease;
+    }
+
+    .wooden-box .clue-card:hover {
+      transform: none;
+    }
+
+    .wooden-box .clue-card::after {
+      content: "✓";
+      position: absolute;
+      right: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 22px;
+      height: 22px;
+      background: #2e7d32;
+      color: white;
+      border-radius: 50%;
+      font-size: 14px;
+      font-weight: 900;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    @keyframes dropIn {
+      from { transform: scale(0.85); opacity: 0.4; }
+      to { transform: scale(1); opacity: 1; }
+    }
+
+    /* 過關慶祝橫幅 */
+    .victory-banner {
+      display: none;
+      margin-top: 16px;
+      background: linear-gradient(90deg, #2e7d32, #43a047, #2e7d32);
+      color: white;
+      padding: 12px 20px;
+      border-radius: 8px;
+      text-align: center;
+      font-size: 20px;
+      font-weight: 900;
+      box-shadow: 0 4px 15px rgba(46, 125, 50, 0.4);
+      animation: dropIn 0.4s ease;
+    }
+
+    /* 觸控拖曳時跟隨手指的分身 */
+    .touch-clone {
+      position: fixed;
+      pointer-events: none;
+      z-index: 9999;
+      opacity: 0.92;
+      transform: scale(1.05) rotate(2deg);
+      box-shadow: 0 12px 24px rgba(0,0,0,0.45);
+    }
+
+    @media (max-width: 960px) {
+      .book-container {
+        padding: 20px 20px 20px 34px;
+      }
+      .boxes-grid {
+        grid-template-columns: 1fr;
+        gap: 36px;
+      }
+      .badge {
+        position: static;
+        margin-bottom: 10px;
+      }
+      .header-area {
+        flex-direction: column;
+      }
+      .title-banner {
+        margin-left: 0;
+        margin-right: 0;
+      }
+      .controls {
+        position: static;
+        margin-top: 10px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<div class="book-container">
+  <!-- 頂部標題與徽章 -->
+  <div class="header-area">
+    <div class="badge" aria-hidden="true">
+      <div class="badge-inner">
+        <div class="badge-icons">🔍💡</div>
+        <div class="badge-p">P</div>
+        <div class="badge-label">Plan (計畫)</div>
+      </div>
+    </div>
+
+    <div class="title-banner">
+      <h1>【P】任務計畫：找出線索（辨識變量）</h1>
+    </div>
+
+    <div class="controls">
+      <button class="btn" id="soundToggleBtn" type="button">🔊 音效：開</button>
+      <button class="btn" id="resetBtn" type="button">🔄 重新開始</button>
+    </div>
+  </div>
+
+  <!-- 三個木盒分類區 -->
+  <div class="boxes-grid">
+    <!-- 自變量 -->
+    <div class="column">
+      <div class="column-title">
+        <div class="main">我們要改變的</div>
+        <div class="sub">(自變量)</div>
+      </div>
+      <div class="wooden-box" data-box-type="independent">
+        <div class="box-icon" title="時間">🕒</div>
+        <div class="box-interior">
+          <div class="box-placeholder">將「自變量」紙條拖放到這裡</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 因變量 -->
+    <div class="column">
+      <div class="column-title">
+        <div class="main">我們要測量的</div>
+        <div class="sub">(因變量)</div>
+      </div>
+      <div class="wooden-box" data-box-type="dependent">
+        <div class="box-icon" title="測量尺">📏</div>
+        <div class="box-interior">
+          <div class="box-placeholder">將「因變量」紙條拖放到這裡</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 控制變量 -->
+    <div class="column">
+      <div class="column-title">
+        <div class="main">絕對不能變的</div>
+        <div class="sub">(控制變量)</div>
+      </div>
+      <div class="wooden-box" data-box-type="controlled">
+        <div class="box-icon" title="鎖定條件">🔒</div>
+        <div class="box-interior">
+          <div class="box-placeholder">將「控制變量」紙條拖放到這裡（共 3 張）</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 盒子外的待選變量紙條區 -->
+  <div class="clue-pool-section">
+    <div class="pool-header">
+      <div class="pool-title">🗂️ 線索紙條待選區（請將紙條拖入上方正確的木盒，或點擊紙條再點擊木盒）：</div>
+      <div class="status-msg" id="statusMsg">請開始分類線索！（已完成 0 / 5）</div>
+    </div>
+    <div class="clue-pool" id="cluePool"></div>
+  </div>
+
+  <!-- 過關提示 -->
+  <div class="victory-banner" id="victoryBanner">
+    🎉 太棒了！所有線索都成功放進正確的變量盒子裡，實驗計畫準備完成！
+  </div>
+</div>
+
+<script>
+  // 定義畫面上的 5 個變量線索
+  const CLUES_DATA = [
+    {
+      id: "clue-1",
+      text: "一天中不同的「時間」（每隔一小時觀測一次）。",
+      type: "independent"
+    },
+    {
+      id: "clue-2",
+      text: "鉛筆影子的「長度」與「方向」。",
+      type: "dependent"
+    },
+    {
+      id: "clue-3",
+      text: "同一枝已削短的鉛筆",
+      type: "controlled"
+    },
+    {
+      id: "clue-4",
+      text: "鉛筆必須垂直插在黏土上",
+      type: "controlled"
+    },
+    {
+      id: "clue-5",
+      text: "A3 白紙的位置與方向固定不變",
+      type: "controlled"
+    }
+  ];
+
+  const cluePool = document.getElementById("cluePool");
+  const statusMsg = document.getElementById("statusMsg");
+  const victoryBanner = document.getElementById("victoryBanner");
+  const resetBtn = document.getElementById("resetBtn");
+  const soundToggleBtn = document.getElementById("soundToggleBtn");
+  const woodenBoxes = document.querySelectorAll(".wooden-box");
+
+  let completedCount = 0;
+  let selectedCard = null;
+  let draggedCard = null;
+  let soundEnabled = true;
+
+  // ====== Web Audio API 合成音效系統 (免外部音檔) ======
+  let audioCtx = null;
+
+  function getAudioContext() {
+    if (!audioCtx) {
+      const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+      if (AudioContextClass) {
+        audioCtx = new AudioContextClass();
+      }
+    }
+    if (audioCtx && audioCtx.state === "suspended") {
+      audioCtx.resume();
+    }
+    return audioCtx;
+  }
+
+  // 播放單音輔助函數
+  function playTone(freq, type, duration, startTimeOffset = 0, volume = 0.18) {
+    if (!soundEnabled) return;
+    const ctx = getAudioContext();
+    if (!ctx) return;
+
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = type;
+    osc.frequency.setValueAtTime(freq, ctx.currentTime + startTimeOffset);
+
+    gain.gain.setValueAtTime(volume, ctx.currentTime + startTimeOffset);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + startTimeOffset + duration);
+
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+
+    osc.start(ctx.currentTime + startTimeOffset);
+    osc.stop(ctx.currentTime + startTimeOffset + duration);
+  }
+
+  // 1. 拿起或點選卡片音效（輕脆短音）
+  function playPickupSound() {
+    playTone(520, "sine", 0.08, 0, 0.12);
+  }
+
+  // 2. 放入正確音效（清脆叮咚聲 C5 -> E5 -> G5）
+  function playCorrectSound() {
+    playTone(523.25, "triangle", 0.14, 0, 0.22);
+    playTone(659.25, "triangle", 0.14, 0.1, 0.22);
+    playTone(783.99, "triangle", 0.28, 0.2, 0.25);
+  }
+
+  // 3. 放入錯誤退回音效（低沉雙短音）
+  function playWrongSound() {
+    playTone(210, "sawtooth", 0.16, 0, 0.15);
+    playTone(165, "sawtooth", 0.26, 0.15, 0.18);
+  }
+
+  // 4. 全部完成過關音效（歡快號角旋律）
+  function playVictorySound() {
+    const notes = [523.25, 659.25, 783.99, 1046.5];
+    notes.forEach((freq, idx) => {
+      const duration = idx === notes.length - 1 ? 0.5 : 0.14;
+      playTone(freq, "triangle", duration, idx * 0.13, 0.25);
+    });
+  }
+
+  // 音效開關按鈕
+  soundToggleBtn.addEventListener("click", () => {
+    soundEnabled = !soundEnabled;
+    if (soundEnabled) {
+      soundToggleBtn.textContent = "🔊 音效：開";
+      soundToggleBtn.classList.remove("muted");
+      playPickupSound();
+    } else {
+      soundToggleBtn.textContent = "🔇 音效：關";
+      soundToggleBtn.classList.add("muted");
+    }
+  });
+
+  // 隨機洗牌函數
+  function shuffleArray(arr) {
+    const copy = [...arr];
+    for (let i = copy.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [copy[i], copy[j]] = [copy[j], copy[i]];
+    }
+    return copy;
+  }
+
+  // 更新狀態訊息
+  function updateStatus(message, type = "normal") {
+    statusMsg.textContent = message;
+    statusMsg.className = "status-msg";
+    if (type === "success") statusMsg.classList.add("success");
+    if (type === "error") statusMsg.classList.add("error");
+  }
+
+  // 初始化或重置遊戲
+  function initGame() {
+    completedCount = 0;
+    selectedCard = null;
+    draggedCard = null;
+    victoryBanner.style.display = "none";
+    updateStatus("請開始分類線索！（已完成 0 / 5）");
+
+    // 清空木盒內的卡片並恢復提示字
+    woodenBoxes.forEach(box => {
+      const interior = box.querySelector(".box-interior");
+      const cards = interior.querySelectorAll(".clue-card");
+      cards.forEach(c => c.remove());
+      const placeholder = interior.querySelector(".box-placeholder");
+      if (placeholder) placeholder.style.display = "block";
+    });
+
+    // 洗牌並建立外部紙條
+    cluePool.innerHTML = "";
+    const shuffled = shuffleArray(CLUES_DATA);
+    shuffled.forEach(item => {
+      const card = document.createElement("div");
+      card.className = "clue-card";
+      card.draggable = true;
+      card.dataset.id = item.id;
+      card.dataset.type = item.type;
+      card.textContent = item.text;
+
+      // 滑鼠拖放事件
+      card.addEventListener("dragstart", (e) => {
+        if (card.parentElement !== cluePool) {
+          e.preventDefault();
+          return;
+        }
+        playPickupSound();
+        draggedCard = card;
+        e.dataTransfer.setData("text/plain", item.id);
+        setTimeout(() => { card.style.opacity = "0.5"; }, 0);
+      });
+
+      card.addEventListener("dragend", () => {
+        card.style.opacity = "1";
+        draggedCard = null;
+      });
+
+      // 點擊選取（輔助觸控或點擊操作）
+      card.addEventListener("click", (e) => {
+        if (card.parentElement !== cluePool) return;
+        e.stopPropagation();
+        playPickupSound();
+        if (selectedCard === card) {
+          card.classList.remove("selected");
+          selectedCard = null;
+        } else {
+          document.querySelectorAll(".clue-card").forEach(c => c.classList.remove("selected"));
+          card.classList.add("selected");
+          selectedCard = card;
+          updateStatus("已選取紙條，請點擊上方要放入的木盒！");
+        }
+      });
+
+      // 行動裝置觸控拖曳支援
+      setupTouchDrag(card);
+
+      cluePool.appendChild(card);
+    });
+  }
+
+  // 檢查放入的木盒是否正確
+  function handleDropToBox(card, box) {
+    if (!card || !box) return;
+    const expectedType = box.dataset.boxType;
+    const actualType = card.dataset.type;
+
+    card.classList.remove("selected");
+    selectedCard = null;
+
+    if (expectedType === actualType) {
+      // 正確：留在木盒內
+      const interior = box.querySelector(".box-interior");
+      const placeholder = interior.querySelector(".box-placeholder");
+      if (placeholder) placeholder.style.display = "none";
+
+      card.draggable = false;
+      interior.appendChild(card);
+
+      box.classList.remove("correct-flash");
+      void box.offsetWidth; // 觸發重繪
+      box.classList.add("correct-flash");
+
+      completedCount++;
+      if (completedCount === CLUES_DATA.length) {
+        playVictorySound();
+        updateStatus(`🎉 全部正確！（已完成 ${completedCount} / 5）`, "success");
+        victoryBanner.style.display = "block";
+      } else {
+        playCorrectSound();
+        updateStatus(`✅ 答對了！線索已放入木盒（已完成 ${completedCount} / 5）`, "success");
+      }
+    } else {
+      // 錯誤：播放退回音效、搖晃木盒並退回原處
+      playWrongSound();
+      box.classList.remove("wrong-shake");
+      void box.offsetWidth;
+      box.classList.add("wrong-shake");
+
+      updateStatus("❌ 放錯盒子囉！請再想一想這個條件屬於哪一類（紙條已退回）", "error");
+    }
+  }
+
+  // 為每個木盒綁定拖放與點擊事件
+  woodenBoxes.forEach(box => {
+    box.addEventListener("dragover", (e) => {
+      e.preventDefault();
+      box.classList.add("drag-over");
+    });
+
+    box.addEventListener("dragleave", () => {
+      box.classList.remove("drag-over");
+    });
+
+    box.addEventListener("drop", (e) => {
+      e.preventDefault();
+      box.classList.remove("drag-over");
+      if (draggedCard) {
+        handleDropToBox(draggedCard, box);
+      }
+    });
+
+    // 若使用者先點擊選取了卡片，再點擊木盒也可放入
+    box.addEventListener("click", () => {
+      if (selectedCard) {
+        handleDropToBox(selectedCard, box);
+      }
+    });
+  });
+
+  // 觸控螢幕拖曳實作（支援 iPad / 平板 / 觸控大屏）
+  function setupTouchDrag(card) {
+    let clone = null;
+
+    card.addEventListener("touchstart", (e) => {
+      if (card.parentElement !== cluePool) return;
+      playPickupSound();
+      const touch = e.touches[0];
+      draggedCard = card;
+
+      clone = card.cloneNode(true);
+      clone.classList.add("touch-clone");
+      clone.style.width = `${card.offsetWidth}px`;
+      clone.style.left = `${touch.clientX - card.offsetWidth / 2}px`;
+      clone.style.top = `${touch.clientY - 30}px`;
+      document.body.appendChild(clone);
+      card.style.opacity = "0.4";
+    }, { passive: true });
+
+    card.addEventListener("touchmove", (e) => {
+      if (!clone) return;
+      e.preventDefault();
+      const touch = e.touches[0];
+      clone.style.left = `${touch.clientX - clone.offsetWidth / 2}px`;
+      clone.style.top = `${touch.clientY - 30}px`;
+
+      woodenBoxes.forEach(b => b.classList.remove("drag-over"));
+      const elemBelow = document.elementFromPoint(touch.clientX, touch.clientY);
+      const targetBox = elemBelow ? elemBelow.closest(".wooden-box") : null;
+      if (targetBox) targetBox.classList.add("drag-over");
+    }, { passive: false });
+
+    card.addEventListener("touchend", (e) => {
+      if (!clone) return;
+      const touch = e.changedTouches[0];
+      clone.remove();
+      clone = null;
+      card.style.opacity = "1";
+
+      woodenBoxes.forEach(b => b.classList.remove("drag-over"));
+      const elemBelow = document.elementFromPoint(touch.clientX, touch.clientY);
+      const targetBox = elemBelow ? elemBelow.closest(".wooden-box") : null;
+
+      if (targetBox && draggedCard) {
+        handleDropToBox(draggedCard, targetBox);
+      }
+      draggedCard = null;
+    });
+  }
+
+  resetBtn.addEventListener("click", () => {
+    playPickupSound();
+    initGame();
+  });
+
+  // 啟動遊戲
+  initGame();
+</script>
+
+</body>
+</html>
